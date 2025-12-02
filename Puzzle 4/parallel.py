@@ -8,22 +8,21 @@ x = []
 results = 0
 
 # With parallel processing
+# Doesn't work for some reason
 
 def checkInvalid(number):
     i = 2
     string = str(number)
 
     digits = dict(Counter(string))
-    for a,b in pairwise(combinations(digits, len(digits))):
+    for a in digits:
         if a == 1:
             return 0
-        if b == 1:
-            return 0
+    for a,b in pairwise(combinations(digits, len(digits))):
         if a != b:
             return 0
-        
-    lastcheck = number / 2
-    while (i <= lastcheck):
+
+    while (i <= number/2):
         if len(string) % i == 0:
             splitstring = re.findall('.' * i, string)
             for a, b in pairwise(splitstring):
@@ -37,6 +36,7 @@ def checkInvalid(number):
 def process_range(r):
     invalid_count = 0
     lowerbound, upperbound = map(int, r.split('-'))
+    print("Zahlenbereich" + r + "begonnen")
     while (lowerbound <= upperbound):
         invalid_count += checkInvalid(lowerbound)
         lowerbound += 1

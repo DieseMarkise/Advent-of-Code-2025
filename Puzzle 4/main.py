@@ -9,11 +9,11 @@ invalid = 0
 # Probably too slow for now
 
 def checkInvalid(number):
-    print(number)
     i = 2
     string = str(number)
-
     digits = dict(Counter(string))
+    for a in combinations(digits, len(digits)):
+        if a == 1: return 0
     for a,b in pairwise(combinations(digits, len(digits))):
         if a != b:
             return 0
@@ -35,8 +35,8 @@ with open("Puzzle 4/input.csv") as f:
         x = line.split(',')
 
 for range in x:
-    print("Starting new range")
     lowerbound, upperbound = map(int, range.split('-'))
+    print("Starting new range:" + range)
     while (lowerbound <= upperbound):
         invalid += checkInvalid(lowerbound)
         lowerbound += 1
