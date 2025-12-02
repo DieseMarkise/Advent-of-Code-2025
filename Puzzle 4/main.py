@@ -1,36 +1,37 @@
 import re
-from collections import Counter
-from itertools import pairwise
-from itertools import combinations
 
 x = []
+input = "Puzzle 4/input.csv"
 invalid = 0
 
-# Probably too slow for now
+# kann man vorher für alle Längen in input berechnen, war mir aber zu doof, war so schon nervig genug
+
+faktoren = {
+    1: [],
+    2: [1],
+    3: [1],
+    4: [1, 2],
+    5: [1],
+    6: [1, 2, 3],
+    7: [1],
+    8: [1, 2, 4],
+    9: [1, 3],
+    10: [1, 2, 5],
+    11: [1],
+    12: [1, 2, 3, 4, 6],
+    13: [1],
+    14: [1, 7]
+}
 
 def checkInvalid(number):
-    i = 2
     string = str(number)
-    digits = dict(Counter(string))
-    for a in combinations(digits, len(digits)):
-        if a == 1: return 0
-    for a,b in pairwise(combinations(digits, len(digits))):
-        if a != b:
-            return 0
-        
-    lastcheck = number / 2
-    while (i <= lastcheck):
-        if len(string) % i == 0:
-            splitstring = re.findall('.' * i, string)
-            for a, b in pairwise(splitstring):
-                if a != b:
-                    break
-                elif i == len(splitstring):
-                    return number      
-        i += 1
+    for i in faktoren[len(string)]:
+        splitstring = re.findall('.' * i, string)
+        if len(set(splitstring)) == 1:
+            return number     
     return 0
 
-with open("Puzzle 4/input.csv") as f:
+with open(input) as f:
     for line in f:
         x = line.split(',')
 
