@@ -1,10 +1,10 @@
+import pulp
+
 input = 'Puzzle 20/input.csv'
 
 x = []
 
-sum_depth = 0
-
-searchDepth = 200
+sum_presses = 0
 
 with open(input) as f:
     for line in f:
@@ -12,77 +12,47 @@ with open(input) as f:
 
 def lightMap(c):
     if c == '#': return 1
-    # elif c == '.': return 0
     else: return 0
 
-def increment(arrangement, operation):
-    outputArrangement = []
-    for i in range(0, len(arrangement), 1):
-        if i in operation: outputArrangement.append(arrangement[i] + 1)
-        else: outputArrangement.append(arrangement[i])
-    return outputArrangement
+def solve_operations_ilp(goal, operations):
+    problem = pulp.LpProblem("OpSolve", pulp.LpMinimize)
 
+    k = len(operations)
+    d = len(goal)
 
-def iterateOperationsStopOnGoalVisited(start_arrangement, operations, d, goal):
-    m = 0
-    def applyOperation(arrangement, operations, op_idx):
-        return increment(arrangement, operations[op_idx])
+    c = [pulp.LpVariable(f"c_{j}", lowBound=0, cat='Integer') for j in range(k)]
 
-    current = [(start_arrangement, [])]
-    visited = set()
-    visited.add(tuple(start_arrangement))
+    problem += pulp.lpSum(c)
 
-    for depth in range(1, d+1):
-        next_level = []
+    for i in range(d):
+        problem += pulp.lpSum(c[j] * operations[j][i] for j in range(k)) == goal[i]
 
-        for arr, path in current:
-            for op_idx in range(len(operations)):
+    status = problem.solve(pulp.PULP_CBC_CMD(msg=False))
 
-                new_arr = applyOperation(arr, operations, op_idx)
-                new_path = path + [op_idx]
-                m = (m + 1) % 200000
-                if m == 0:
-                    print(new_arr, sum(new_arr))
+    if pulp.LpStatus[status] != 'Optimal':
+        return None
 
-                if any(new_arr[i] > goal[i] for i in range(len(goal))):
-                    continue
-
-                arr_tuple = tuple(new_arr)
-                if arr_tuple in visited:
-                    continue
-                visited.add(arr_tuple)
-
-                if new_arr == goal:
-                    return (depth, new_arr, new_path)
-
-                next_level.append((new_arr, new_path))
-
-        if not next_level:
-            return None
-
-        current = next_level
-
-    return None
+    return [int(v.value()) for v in c]
 
 
 for machines in x:
-    goal = list(map(lightMap, machines.split()[0][1:-1]))
-    startingArrangement = [0] * len(goal)
     lights = list(map(int, machines.split()[-1].lstrip('{').rstrip('}').split(',')[:]))
     strOperations = machines.split()[1:-1]
+    operations_raw = []
     operations = []
     for operation in strOperations:
-        operations.append(list(map(int,operation.lstrip('(').rstrip(')').split(',')[:])))
+        operations_raw.append(list(map(int, operation.lstrip('(').rstrip(')').split(','))))
+    for operation in operations_raw:
+        vector = [0] * len(lights)
+        for index in operation:
+            vector[index] = 1
+        operations.append(vector)
     operations.sort(reverse=True, key=sum)
-    result = iterateOperationsStopOnGoalVisited(startingArrangement, operations, searchDepth, lights)
 
-    if result is None:
-        print("Kein Pfad innerhalb der Tiefe gefunden.")
-    else:
-        depth, arrangement, path = result
-        sum_depth += depth
-        print("Gefunden auf Tiefe:", depth)
-        print("Arrangement:", arrangement)
-        print("Pfad:", path)
+    result = solve_operations_ilp(lights, operations)
+    print(result)
+    sum_presses += sum(result)
+    
 
-print('Summe der Operationen:', sum)
+
+print('Summe der Operationen:', sum_presses)
